@@ -1,13 +1,3 @@
----
-title: Tessera
-emoji: 📈
-colorFrom: indigo
-colorTo: red
-sdk: docker
-app_port: 8000
-pinned: false
----
-
 # Tessera — an arbitrage-free volatility-surface & options market-making console
 
 > *A tessera is a single tile in a mosaic.* The implied-volatility surface is
