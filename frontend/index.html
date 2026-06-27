@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tessera — options market-making desk</title>
+<meta name="description" content="Arbitrage-free implied-volatility surface fitting and market-making diagnostics.">
+<link rel="stylesheet" href="/css/styles.css">
+<script src="/vendor/plotly.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="app">
+  <!-- ───────── left rail ───────── -->
+  <aside class="rail">
+    <div class="masthead">
+      <div class="glyphmark">
+        <span class="integral" aria-hidden="true">&#8750;</span>
+        <span class="wordmark">Tessera</span>
+      </div>
+      <span class="kicker">options market-making desk</span>
+    </div>
+
+    <div class="rail-sec">
+      <span class="eyebrow">data source</span>
+      <div class="seg" role="tablist">
+        <button class="seg-btn active" data-source="synthetic" role="tab">synthetic</button>
+        <button class="seg-btn" data-source="live" role="tab">live</button>
+      </div>
+    </div>
+
+    <div class="rail-sec">
+      <label class="field" id="ticker-field" hidden>
+        <span>ticker</span>
+        <input id="ticker" type="text" value="SPY" maxlength="12" autocomplete="off" spellcheck="false">
+      </label>
+      <div class="field-row">
+        <label class="field"><span>risk-free r</span><input id="r" type="number" value="0.04" step="0.005"></label>
+        <label class="field"><span>dividend q</span><input id="q" type="number" value="0.01" step="0.005"></label>
+      </div>
+      <label class="field" id="seed-field"><span>synthetic seed</span><input id="seed" type="number" value="7" step="1" min="0"></label>
+      <button id="fit-btn" class="primary">
+        <span class="btn-label">fit surface</span>
+        <span class="btn-spin" hidden></span>
+      </button>
+      <p id="live-note" class="hint" hidden>Live mode needs internet and yfinance. Run locally if the host blocks outbound calls.</p>
+    </div>
+
+    <div class="rail-sec legend">
+      <span class="eyebrow">reading the panels</span>
+      <p><b class="c-teal">g(k) &#8805; 0</b> &mdash; no butterfly arbitrage. The implied density stays non-negative.</p>
+      <p><b class="c-red">g(k) &lt; 0</b> &mdash; a butterfly spread has negative cost. The density crosses zero; the model breaks there.</p>
+      <p class="hint">Static scans report <i>gross</i> dislocations. Most close once spread, borrow and dividends net out.</p>
+    </div>
+
+    <div class="rail-foot">
+      <span class="health"><span id="health-dot" class="dot"></span> backend</span>
+      <span>raw SVI &middot; Gatheral no-arbitrage</span>
+      <span>numerics: scipy, server-side</span>
+    </div>
+  </aside>
+
+  <!-- ───────── main ───────── -->
+  <main class="main" id="main">
+    <div class="topline">
+      <div>
+        <h1>Volatility surface console</h1>
+        <div class="sub">fair value &middot; two-sided quoting &middot; arbitrage policing</div>
+      </div>
+      <div class="session">
+        <span id="status-calendar" class="pill pill-idle">calendar &mdash;</span>
+        <span id="status-butterfly" class="pill pill-idle">butterfly &mdash;</span>
+        <span class="clock">UTC&nbsp;<b id="clock">&mdash;</b></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- instrument readout -->
+      <section class="readout">
+        <div class="ro"><span class="ro-k">underlying</span><span id="t-underlying" class="ro-v">&mdash;</span></div>
+        <div class="ro"><span class="ro-k">maturities</span><span id="t-mats" class="ro-v">&mdash;</span></div>
+        <div class="ro"><span class="ro-k">spot</span><span id="t-spot" class="ro-v">&mdash;</span></div>
+        <div class="ro"><span class="ro-k">calendar arb</span><span id="t-calendar" class="ro-v">&mdash;</span></div>
+        <div class="ro"><span class="ro-k">butterfly arb</span><span id="t-butterfly" class="ro-v">&mdash;</span></div>
+      </section>
+
+      <!-- hero stage -->
+      <section class="stage">
+        <div class="panel">
+          <div class="panel-head"><span class="eyebrow">implied-volatility surface</span></div>
+          <div class="panel-body"><div id="surface3d" class="plot tall"></div></div>
+        </div>
+        <div class="panel tripwire-panel" id="slice-panel">
+          <div class="panel-head">
+            <span class="eyebrow">slice diagnostics</span>
+            <div id="mat-tabs" class="mat-tabs"></div>
+          </div>
+          <div class="panel-body">
+            <div id="smile" class="plot"></div>
+            <div class="tripwire">
+              <span id="tripwire-status" class="pill pill-idle">awaiting fit</span>
+              <span class="tripwire-label">risk-neutral density tripwire</span>
+            </div>
+            <div id="density" class="plot"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- arbitrage scan -->
+      <section class="scan">
+        <div class="scan-col">
+          <span class="eyebrow">put-call parity dislocations</span>
+          <div id="parity"><p class="hint">Fit a surface to scan.</p></div>
+        </div>
+        <div class="scan-col">
+          <span class="eyebrow">box-spread implied financing</span>
+          <div id="box"><p class="hint">Fit a surface to scan.</p></div>
+        </div>
+      </section>
+
+      <!-- desk note -->
+      <section class="desk">
+        <div class="desk-head">
+          <span class="eyebrow">desk commentary</span>
+          <button id="note-btn" class="ghost" disabled>generate note</button>
+        </div>
+        <p class="hint">The model only phrases the computed metrics &mdash; it never computes or invents a figure. The key stays server-side and runs on a free model.</p>
+        <div id="note-out" class="note-out"></div>
+        <details class="raw">
+          <summary>raw metrics passed to the model</summary>
+          <pre id="raw-metrics">&mdash;</pre>
+        </details>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/charts.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

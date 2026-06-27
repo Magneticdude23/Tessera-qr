@@ -1,0 +1,16 @@
+# core numerics
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+
+# full-stack backend
+fastapi>=0.110
+uvicorn[standard]>=0.29
+requests>=2.31
+
+# live option chains (optional; offline synthetic mode needs none of this)
+yfinance>=0.2.40
+
+# --- dev only ---
+# pytest>=8.0
+# httpx>=0.27          # for FastAPI TestClient
