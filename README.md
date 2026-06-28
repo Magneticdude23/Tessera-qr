@@ -1,5 +1,7 @@
 # Tessera — an arbitrage-free volatility-surface & options market-making console
 
+https://tessera-qr.onrender.com/
+
 > *A tessera is a single tile in a mosaic.* The implied-volatility surface is
 > assembled the same way — one calibrated maturity slice at a time — into a
 > coherent, arbitrage-free whole.
